@@ -42,8 +42,8 @@
 <br>
 <div id="trap" style="display:flex;justify-content:center" flex-direction="column">
 <button type="button" style="background-color:green">Standard</button>
-<button type="button">MPincher</button>
 <button type="button">TPincher</button>
+<button type="button">MPincher</button>
 </div>
 <br>
 <center>
@@ -163,7 +163,8 @@ Sample Size: <span id="ss"></span>
 		let ci = tc.indexOf(e.originalTarget);
 		tc[trap].style=""
 		tc[ci].style="background-color:green"
-		trap=ci;
+		if (ci==1){trap=2;}
+		if (ci==2){trap=1;}
 		update_table();
 	});
 </script>
