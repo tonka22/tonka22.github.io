@@ -1,0 +1,451 @@
+<html>
+<body>
+<div id="pieces" style="display:flex;justify-content:center" flex-direction="column">
+<button type="button">♟</button>
+<button type="button">♟</button>
+<button type="button">♟</button>
+<button type="button">♟</button>
+<button type="button">♟</button>
+<button type="button">♟</button>
+<button type="button">♟</button>
+<button type="button">♟</button>
+<button type="button">♞</button>
+<button type="button">♞</button>
+<button type="button">♝</button>
+<button type="button">♝</button>
+<button type="button">♜</button>
+<button type="button">♜</button>
+<button type="button">♛</button>
+<button type="button">♚</button>
+<button type="button">♙</button>
+<button type="button">♙</button>
+<button type="button">♙</button>
+<button type="button">♙</button>
+<button type="button">♙</button>
+<button type="button">♙</button>
+<button type="button">♙</button>
+<button type="button">♙</button>
+<button type="button">♘</button>
+<button type="button">♘</button>
+<button type="button">♗</button>
+<button type="button">♗</button>
+<button type="button">♖</button>
+<button type="button">♖</button>
+<button type="button">♕</button>
+<button type="button">♔</button> 
+</div>
+<br>
+<div id="cheese" style="display:flex;justify-content:center" flex-direction="column">
+<button type="button" style="background-color:green">Standard</button>
+<button type="button">Checkmate</button>
+</div>
+<br>
+<div id="trap" style="display:flex;justify-content:center" flex-direction="column">
+<button type="button" style="background-color:green">Standard</button>
+<button type="button">TPincher</button>
+<button type="button">MPincher</button>
+</div>
+<br>
+<center>
+Base Power: <input title="Power outside ZT" id="power" value=0> Base Luck: <input title="Luck outside ZT" id="luck" value=0> Amplifier: <div title="Current ZT Amplifier" style="display:inline-block"><input id="amp_slider" type="range" min="0" max="175" value="100" oninput="document.getElementById('amp_text').value=this.value;"><br><input id="amp_text" value="100" oninput="document.getElementById('amp_slider').value=this.value"></div>
+<br>
+<br>
+Confidence: <input title="How &quot;safe&quot; you want the results to be" id="confi" value=0.8>
+<br>
+<button type="button" id="runsim">Run simulator!</button>
+<br>
+<br>
+<span id="sim_results"></span>
+</center>
+</body>
+<script>
+	// Load power,luck,amp,confi if set previously
+	let cache = localStorage.getItem("ztsim_cache");
+	if (cache!=null){
+		let cache_arr = cache.split(',');
+		document.getElementById('power').value=cache_arr[0];
+		document.getElementById('luck').value=cache_arr[1];
+		document.getElementById('amp_slider').value=cache_arr[2];
+		document.getElementById('amp_text').value=cache_arr[2];
+		document.getElementById('confi').value=cache_arr[3];
+		
+	}
+
+	let technic_count,mystic_count,cheese,trap;
+	technic_count=mystic_count=cheese=trap=0;
+	let result_string='';
+	const pieces_div = document.getElementById('pieces');
+	const cheese_div = document.getElementById('cheese');
+	const trap_div = document.getElementById('trap');
+	const runsim_button = document.getElementById('runsim');
+	const simresults_span = document.getElementById('sim_results');
+	const pieces_div_children = [].slice.call(pieces_div.children);
+	const cheese_div_children = [].slice.call(cheese_div.children);
+	const trap_div_children = [].slice.call(trap_div.children);
+	let d = [2128,0,0,0,0,0,1988,0,0,0,0,0,0,1531,0,0,0,0,0,1390,4055,0,0,0,0,0,2364,0,0,0,0,0,1058,2862,4252,0,0,0,0,1829,0,0,0,0,0,858,902,2524,4143,0,0,0,1176,0,0,0,0,0,136,698,1184,1199,1727,0,0,300,0,0,0,0,0,77,254,304,321,305,295,0,317,0,0,0,0,0,41,0,0,0,0,0,0,1238,3761,0,0,0,0,1179,0,0,0,0,0,0,62,213,0,0,0,0,95,187,0,0,0,0,0,102,306,0,0,0,0,57,139,194,0,0,0,0,145,450,0,0,0,0,77,69,232,369,0,0,0,137,484,0,0,0,0,16,94,159,141,245,0,0,61,161,0,0,0,0,17,40,73,71,77,58,0,300,984,0,0,0,0,22,0,0,0,0,0,0,1003,2618,3842,0,0,0,1850,0,0,0,0,0,0,41,138,178,0,0,0,95,293,0,0,0,0,0,88,225,354,0,0,0,75,228,336,0,0,0,0,87,288,369,0,0,0,94,98,264,431,0,0,0,127,321,489,0,0,0,16,143,211,228,355,0,0,41,88,171,0,0,0,17,77,91,96,92,81,0,270,791,1174,0,0,0,59,0,0,0,0,0,0,748,798,2266,4020,0,0,1651,0,0,0,0,0,0,54,51,163,298,0,0,127,313,0,0,0,0,0,86,94,273,394,0,0,76,226,309,0,0,0,0,88,83,212,374,0,0,65,84,220,382,0,0,0,110,115,296,569,0,0,24,127,217,217,311,0,0,26,27,97,155,0,0,17,55,77,74,80,74,0,328,322,948,1571,0,0,63,0,0,0,0,0,0,114,609,1054,1110,1683,0,1114,0,0,0,0,0,0,11,72,125,113,190,0,131,374,0,0,0,0,0,17,123,193,202,271,0,90,264,373,0,0,0,0,24,102,132,122,236,0,73,69,201,383,0,0,0,21,88,141,141,219,0,12,89,163,162,236,0,0,3,33,46,43,70,0,15,41,69,48,44,54,0,69,404,641,694,1001,0,71,0,0,0,0,0,0,76,228,318,275,311,326,289,0,0,0,0,0,0,19,44,46,58,59,65,46,124,0,0,0,0,0,21,58,73,61,71,80,20,57,107,0,0,0,0,12,38,41,42,33,54,19,16,45,69,0,0,0,8,29,26,42,49,43,4,18,25,35,48,0,0,4,10,25,18,11,18,4,11,21,12,18,21,0,68,219,270,273,281,300,32,0,0,0,0,0,0,72,0,0,0,0,0,409,0,0,0,0,0,0,70,0,0,0,0,0,294,985,0,0,0,0,0,122,0,0,0,0,0,283,813,1135,0,0,0,0,124,0,0,0,0,0,280,281,822,1407,0,0,0,146,0,0,0,0,0,56,344,593,615,860,0,0,48,0,0,0,0,0,79,214,268,250,289,283,0,140,0,0,0,0,0,86,0,0,0,0,0,0,27,0,0,0,0,0,17,0,0,0,0,0,0,10,0,0,0,0,0,5,18,0,0,0,0,0,20,0,0,0,0,0,7,13,41,0,0,0,0,48,0,0,0,0,0,7,24,44,134,0,0,0,234,0,0,0,0,0,27,152,188,213,378,0,0,743,0,0,0,0,0,66,200,259,288,263,802,7,241,0,0,0,0,0,0,0,0,107,0,0,724,12,38,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,3,5,0,0,0,0,0,1,3,0,0,0,0,1,3,0,0,0,0,0,2,1,3,0,0,0,18,68,0,0,0,0,1,15,31,24,38,0,0,81,287,0,0,0,0,12,30,38,46,37,118,0,40,139,0,0,0,0,0,0,0,20,0,0,137,1,18,60,0,0,0,16,0,0,0,0,0,0,0,0,3,0,0,0,2,0,0,0,0,0,0,1,0,6,0,0,0,0,2,9,0,0,0,0,1,6,14,0,0,0,0,5,6,15,0,0,0,3,23,72,0,0,0,3,18,13,20,43,0,0,11,122,322,0,0,0,14,32,49,44,39,126,2,2,73,140,0,0,0,0,0,0,22,0,0,167,8,25,40,130,0,0,47,0,0,0,0,0,0,3,0,2,7,0,0,1,8,0,0,0,0,0,1,3,6,10,0,0,0,0,10,0,0,0,0,1,5,4,15,0,0,0,4,2,14,0,0,0,3,18,28,66,0,0,1,20,14,20,45,0,0,16,59,96,266,0,0,5,26,42,29,35,103,2,6,30,43,127,0,0,0,0,0,20,0,0,135,13,166,173,182,351,0,181,0,0,0,0,0,0,1,7,8,14,17,0,16,43,0,0,0,0,0,3,9,11,21,37,0,1,21,58,0,0,0,0,4,15,15,19,33,0,4,8,13,55,0,0,0,1,23,22,26,63,0,3,28,30,33,42,0,0,8,43,54,50,128,0,3,23,27,28,30,76,1,7,38,42,57,102,0,0,0,0,15,0,0,188,86,135,229,235,246,810,648,0,0,0,0,0,3,8,16,31,27,18,79,65,169,0,0,0,0,1,1,8,22,29,29,93,5,66,148,0,0,0,1,7,11,22,17,21,85,10,43,43,152,0,0,1,5,13,12,24,22,81,8,35,39,44,82,0,0,3,12,21,20,15,61,5,11,20,26,15,43,0,13,24,74,70,56,196,0,0,0,68,0,0,473,0,0,0,118,0,0,273,0,0,0,0,0,867,0,0,0,16,0,0,48,127,0,0,0,0,147,0,0,0,17,0,0,7,44,152,0,0,0,138,0,0,0,23,0,0,13,38,40,154,0,0,150,0,0,0,16,0,0,4,37,55,56,99,0,170,0,0,0,61,0,0,14,49,61,64,53,178,468,0,0,0,150,0,0,0,0,0,174,0,0,1172,13214,0,0,0,0,0,1451,0,0,0,0,0,0,379,0,0,0,0,0,52,134,0,0,0,0,0,204,0,0,0,0,0,9,24,45,0,0,0,0,201,0,0,0,0,0,9,10,37,51,0,0,0,51,0,0,0,0,0,3,3,7,6,13,0,0,46,0,0,0,0,0,6,1,8,3,9,11,0,1058,0,0,0,0,0,12,0,0,0,0,0,0,348,974,0,0,0,0,307,0,0,0,0,0,0,5,21,0,0,0,0,5,18,0,0,0,0,0,6,24,0,0,0,0,1,11,11,0,0,0,0,14,32,0,0,0,0,6,7,12,18,0,0,0,1,6,0,0,0,0,0,1,1,1,4,0,0,3,14,0,0,0,0,1,1,4,7,0,3,0,25,73,0,0,0,0,2,0,0,0,0,0,0,37,96,134,0,0,0,52,0,0,0,0,0,0,0,3,5,0,0,0,1,8,0,0,0,0,0,2,2,8,0,0,0,3,5,5,0,0,0,0,6,12,20,0,0,0,7,2,14,21,0,0,0,1,2,1,0,0,0,0,1,1,1,1,0,0,1,1,4,0,0,0,2,0,1,1,1,1,0,1,0,5,0,0,0,0,0,0,0,0,0,0,6,8,26,71,0,0,23,0,0,0,0,0,0,1,0,1,3,0,0,3,1,0,0,0,0,0,0,4,4,16,0,0,5,8,6,0,0,0,0,2,1,5,12,0,0,5,2,12,18,0,0,0,1,1,2,4,0,0,0,2,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0,0,0,0,0,0,0,0,0,2,10,12,10,15,0,8,0,0,0,0,0,0,0,1,1,3,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,2,2,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,8,33,45,42,41,39,26,0,0,0,0,0,0,1,4,8,6,8,9,6,20,0,0,0,0,0,1,4,4,7,6,6,3,10,6,0,0,0,0,0,4,3,5,3,5,3,1,6,11,0,0,0,2,5,2,4,4,4,0,1,4,9,8,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,14,16,15,15,30,29,5,0,0,0,0,0,0,4,0,0,0,0,0,23,0,0,0,0,0,0,2,0,0,0,0,0,1,10,0,0,0,0,0,0,0,0,0,0,0,2,1,3,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,0,0,2,0,0,0,0,0,0,18,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,3,3,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,7,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,4,0,0,0,4,0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,1,1,2,0,0,0,1,4,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0,0,0,0,0,0,0,0,0,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,1,0,1,1,2,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,3,7,13,14,13,47,30,0,0,0,0,0,0,0,1,7,2,1,3,2,24,0,0,0,0,0,1,1,1,1,1,4,0,4,6,0,0,0,0,0,0,0,0,0,2,2,3,4,4,0,0,0,0,2,0,0,0,2,0,1,0,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,4,4,13,6,12,0,0,0,5,0,0,29,0,0,0,1,0,0,5,0,0,0,0,0,9,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,3,0,0,19,1756,0,0,0,0,0,14400,0,0,0,0,0,0,368,0,0,0,0,0,349,1040,0,0,0,0,0,66,0,0,0,0,0,33,99,152,0,0,0,0,28,0,0,0,0,0,11,7,37,83,0,0,0,9,0,0,0,0,0,2,6,18,18,20,0,0,46,0,0,0,0,0,15,38,51,57,48,44,0,63,0,0,0,0,0,4,0,0,0,0,0,0,28,111,0,0,0,0,301,0,0,0,0,0,0,5,6,0,0,0,0,4,16,0,0,0,0,0,1,0,0,0,0,0,0,3,2,0,0,0,0,1,4,0,0,0,0,1,0,3,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,12,0,0,0,0,1,2,6,3,3,6,0,1,8,0,0,0,0,1,0,0,0,0,0,0,12,45,44,0,0,0,220,0,0,0,0,0,0,2,6,11,0,0,0,5,24,0,0,0,0,0,7,8,8,0,0,0,4,4,9,0,0,0,0,0,3,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,5,5,10,0,0,0,1,7,13,6,8,8,0,3,8,5,0,0,0,0,0,0,0,0,0,0,8,11,35,37,0,0,159,0,0,0,0,0,0,1,0,1,8,0,0,3,12,0,0,0,0,0,0,0,3,3,0,0,0,0,3,0,0,0,0,0,1,1,3,0,0,0,1,0,8,0,0,0,4,7,7,8,0,0,0,2,2,6,9,0,0,5,1,6,12,0,0,0,8,7,7,4,4,0,1,4,3,9,0,0,0,0,0,0,0,0,0,1,4,6,2,7,0,44,0,0,0,0,0,0,2,1,3,3,3,0,1,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,5,2,8,0,1,3,8,8,4,7,0,0,0,2,2,4,0,1,0,0,0,0,0,0,3,8,8,4,4,8,55,0,0,0,0,0,0,0,1,0,0,0,0,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,2,8,3,7,5,6,0,0,0,0,0,0,0,26,0,0,0,0,0,1105,0,0,0,0,0,0,9,0,0,0,0,0,29,84,0,0,0,0,0,1,0,0,0,0,0,3,4,7,0,0,0,0,1,0,0,0,0,0,1,0,1,2,0,0,0,0,0,0,0,0,0,0,1,0,2,0,0,0,9,0,0,0,0,0,6,34,39,53,50,49,0,7,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,47,0,0,0,0,0,3,8,13,15,11,42,0,1,0,0,0,0,0,0,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,23,0,0,0,0,0,2,1,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,6,12,0,0,0,1,2,1,4,1,6,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,3,13,0,0,0,1,2,4,0,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,1,2,13,0,1,0,0,2,4,2,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,2,11,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,2,1,3,0,0,0,0,5,4,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,10,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,0,0,3,7,5,7,6,22,46,0,0,0,2,0,0,0,0,0,2,0,0,8]
+	function factorial(n){
+		if (n<=0){
+			return 1;
+		}
+		return n*factorial(n-1);
+	}
+	function combination(n,r){
+		// nCr
+		return factorial(n)/(factorial(r)*factorial(n-r));
+	}
+	function binom(p,n,x){
+		// Binomial probability for x successes for event with probability p in n trials
+		return combination(n,x) * (p**x) * ((1-p)**(n-x));
+	}
+	function add_arr(a,b,n=13){
+		// adds two arrays of 13 items
+		let result=[];
+		for (let i=0;i<n;i++){
+			result.push(a[i]+b[i])
+		}
+		return result
+	}
+	function mult_arr(a,b,n=13){
+		// multiplies two arrays of 13 items
+		let result=[];
+		for (let i=0;i<n;i++){
+			result.push(a[i]*b[i])
+		}
+		return result
+	}
+	function count_to_stage(i){
+		// Convert pieces caught to which "stage" ZT is in
+		if (i<8){return 0;}
+		if (i<10){return 1;}
+		if (i<12){return 2;}
+		if (i<14){return 3;}
+		if (i<15){return 4;}
+		if (i<16){return 5;}
+		if (i<17){return 6;}
+	}
+	function _ar(t,m,cheese,trap){
+		// Retrieves a single set of AR for given setup
+		// t and m represent the technic and mystic "stage"
+		if (t>6 || m>6){ throw new RangeError('t and m in _ar() must be 6 or less.')}
+		// **~Magic~**
+		let i=((trap*2)+cheese)*(49*13);
+		let j = i+((t*7+m)*13);
+		return d.slice(j,j+13);
+	}
+	function ar(t,m,cheese,trap){
+		// Combines two opposing sets of AR to make a bigger sample
+		// e.g Technic AR = Technic AR + (Mystic AR but the sides are swapped)
+		// t and m represent the technic and mystic "stage"
+		let original_ar = _ar(t,m,cheese,trap);
+		// If trap is a pincher, swap it. Else, stay as 0.
+		trap = (2*trap)%3;
+		let opposing_ar=_ar(m,t,cheese,trap);
+		let swapped_opposing_ar = opposing_ar.slice(6,12).concat(opposing_ar.slice(0,6)).concat(opposing_ar[12]);
+		let result = add_arr(original_ar,swapped_opposing_ar);
+		// Result is raw numbers
+		// Divide by sample size for probabilities
+		let sample_total = result.reduce((a,b)=>a+b);
+		result = result.map((x)=>x/sample_total);
+		return result;
+	}
+	function _cr(E,T,M,L){
+		// Catchrate for single setup
+		return Math.min(1,(E*T+2*(Math.floor(Math.min(1.4,E)*L))**2)/(E*T+M));
+	}
+	function cr(T,L,trap=0){
+		// Array of catchrates for every mouse
+		let mouse_powers=[1800,8596,10800,18620,22004,24000,1800,8596,10800,18620,22004,24000,55000];
+		let mouse_effs=[1,1,1,1,1,25,1,1,1,1,1,25,25];
+		let results=[]
+
+		for (let i=0;i<13;i++){
+			let cr_val = _cr(mouse_effs[i],T,mouse_powers[i],L);
+			if (trap==1){
+				// If TPinch
+				if (i==0){
+					// If TPawn
+					cr_val = 1;
+				} else if (i==6){
+					// If MPawn
+					cr_val = _cr(mouse_effs[i],T-60,mouse_powers[i],L-5);
+				}
+			}
+			else if (trap==2){
+				// If MPinch
+				if (i==0){
+					// If TPawn
+					cr_val = _cr(mouse_effs[i],T-60,mouse_powers[i],L-5);
+				} else if (i==6){
+					// If MPawn
+					cr_val = 1;
+				}
+			}
+			results.push(cr_val);
+		}
+		return results;
+	}
+	function amp(expected_catches){
+		let amps=[1,3,3,5,9,10,1,3,3,5,9,10,10];
+		return mult_arr(expected_catches,amps).reduce((a,b)=>a+b);
+	}
+	function update_table(){
+		let ar_array=ar(count_to_stage(technic_count),count_to_stage(mystic_count),cheese,trap);
+		// console.log(ar_array);
+		// let ss=ar_array.reduce((a,b)=>a+b);
+		// ar_array=ar_array.map(x=>x/ss);
+		// T2 + PB14
+		// let cr_array=cr(25294,82);
+	}
+	update_table();
+	pieces_div.addEventListener("click",(e)=>{
+		let clicked_index = pieces_div_children.indexOf(e.originalTarget);
+		if (clicked_index<=15){
+			if (clicked_index==technic_count-1){
+				for (let i=0;i<=15;i++){pieces_div_children[i].style="";}
+				technic_count=0;
+			} else {
+				for (let i=0;i<=15;i++){
+					if (i<=clicked_index){
+						pieces_div_children[i].style="background-color:green";
+					} else {
+						pieces_div_children[i].style="";
+					}
+				}
+				technic_count=clicked_index+1;
+			}
+		} else {
+			if (clicked_index==mystic_count-1+16){
+				for (let i=16;i<=31;i++){pieces_div_children[i].style="";}
+				mystic_count=0;
+			} else {
+				for (let i=16;i<=31;i++){
+					if (i<=clicked_index){
+						pieces_div_children[i].style="background-color:green";
+					} else {
+						pieces_div_children[i].style="";
+					}
+				}
+				mystic_count=clicked_index-16+1;
+			}
+		}
+		update_table();
+	});
+	cheese_div.addEventListener("click",(e)=>{
+		let clicked_index = cheese_div_children.indexOf(e.originalTarget);
+		cheese_div_children[cheese].style=""
+		cheese_div_children[clicked_index].style="background-color:green"
+		cheese=clicked_index;
+		update_table();
+	});
+	trap_div.addEventListener("click",(e)=>{
+		let clicked_index = trap_div_children.indexOf(e.originalTarget);
+		trap_div_children[trap].style="";
+		trap_div_children[clicked_index].style="background-color:green"
+		trap=clicked_index;
+		update_table();
+	});
+	class TowerRun {
+		constructor(power,luck,amp,technic,mystic,cheese,trap){
+			// technic and mystic is raw piece counts
+			this.max_pieces=[8,2,2,2,1,1]
+			this.power=parseInt(power);
+			this.luck=parseInt(luck);
+			this.amp=parseInt(amp);
+			this.technic_array=[0,0,0,0,0,0];
+			this.mystic_array=[0,0,0,0,0,0];
+			for (let i=0;i<6;i++){
+				if (technic<=0){ break; }
+				else if (technic<this.max_pieces[i]){
+					this.technic_array[i]=technic;
+					break;
+				} else if (technic>=this.max_pieces[i]){
+					this.technic_array[i]=this.max_pieces[i];
+					technic-=this.max_pieces[i];
+				}
+			}
+			for (let i=0;i<6;i++){
+				if (mystic<=0){ break; }
+				else if (mystic<this.max_pieces[i]){
+					this.mystic_array[i]=mystic;
+					break;
+				} else if (mystic>=this.max_pieces[i]){
+					this.mystic_array[i]=this.max_pieces[i];
+					mystic-=this.max_pieces[i];
+				}
+			}
+
+			this.cheese=cheese;
+			this.trap=trap;
+			this.hunts=0;
+		}
+		expected_hunt(){
+			if (this.amp<=1){return;}
+			let technic_stage = count_to_stage(this.technic_array.reduce((a,b)=>a+b,0));
+			let mystic_stage = count_to_stage(this.mystic_array.reduce((a,b)=>a+b,0));
+			let ar_array = ar(technic_stage,mystic_stage,this.cheese,this.trap);
+			let cr_array;
+			if (this.amp>=100){
+				cr_array = cr(this.power*this.amp/100,this.luck,this.trap);
+			} else {
+				cr_array = cr(this.power*this.amp/100,this.luck*this.amp/100,this.trap);
+			}
+			let expected_catches = mult_arr(ar_array,cr_array);
+			this.technic_array = add_arr(this.technic_array,expected_catches.slice(0,6),6);
+			this.mystic_array = add_arr(this.mystic_array,expected_catches.slice(6,12),6);
+			this.technic_array.map((element,index)=>{if(element>=this.max_pieces[index]){this.technic_array[index]=this.max_pieces[index];}});
+			this.mystic_array.map((element,index)=>{if(element>=this.max_pieces[index]){this.mystic_array[index]=this.max_pieces[index];}});
+			this.amp-=amp(expected_catches);
+			this.hunts+=1;
+		}
+		confidence_hunt(confi=0.95){
+			if (this.amp<=1){return;}
+			let technic_count = this.technic_array.reduce((a,b)=>a+b,0);
+			let technic_stage = count_to_stage(technic_count);
+			let mystic_count = this.mystic_array.reduce((a,b)=>a+b,0);
+			let mystic_stage = count_to_stage(mystic_count);
+			let cr_array;
+			if (this.amp>=100){
+				cr_array = cr(this.power*this.amp/100,this.luck,this.trap);
+			} else {
+				cr_array = cr(this.power*this.amp/100,this.luck*this.amp/100,this.trap);
+			}
+			if (mystic_count>technic_count){
+				// Goal will be to finish current mystic stage
+				let NPT = count_to_stage(mystic_count);
+				// NPT => Needed Piece Type
+				let piece_count_needed = this.max_pieces[NPT]-this.mystic_array[NPT];
+				let NPT_P = ar(technic_stage,mystic_stage,this.cheese,this.trap)[6+NPT] * cr_array[6+NPT];
+				// Sorry for being noob, i'm going to calc this iteratively ;;
+				let hunts_needed=-1;
+				for (let trials=1;trials<99;trials++){
+					let cumulative_p=0;
+					for (let success=0;success<piece_count_needed;success++){
+						cumulative_p+=binom(NPT_P,trials,success);
+					}
+					cumulative_p = 1 - cumulative_p;
+					if (cumulative_p>=confi){
+						hunts_needed=trials;
+						break;
+					}
+				}
+				if (hunts_needed<0){this.amp=0;}
+				// Perform hunts_needed number of hunts
+				for (let i=0;i<hunts_needed;i++){
+					if (this.amp<=1){break;}
+					this.expected_hunt();
+				}
+				if (this.amp<=1){return;}
+
+				// Set array as "just" completing the stage
+				this.mystic_array[NPT]=this.max_pieces[NPT];
+				for (let i=NPT+1;i<=5;i++){
+					this.mystic_array[i]=0;
+				}
+				let stage_name;
+				switch (NPT){
+					case 0:
+						stage_name='Mystic Pawns';
+						break;
+					case 1:
+						stage_name='Mystic Knights';
+						break;
+					case 2:
+						stage_name='Mystic Bishops';
+						break;
+					case 3:
+						stage_name='Mystic Rooks';
+						break;
+					case 4:
+						stage_name='Mystic Queen';
+						break;
+					case 5:
+						stage_name='Mystic King';
+						break;
+				}
+				this.print(stage_name);
+			} else {
+				// Goal will be to finish current technic stage
+				let NPT = count_to_stage(technic_count);
+				// NPT => Needed Piece Type
+				let piece_count_needed = this.max_pieces[NPT]-this.technic_array[NPT];
+				let NPT_P = ar(technic_stage,mystic_stage,this.cheese,this.trap)[NPT] * cr_array[NPT];
+				// Sorry for being noob, i'm going to calc this iteratively ;;
+				let hunts_needed=-1;
+				for (let trials=1;trials<99;trials++){
+					let cumulative_p=0;
+					for (let success=0;success<piece_count_needed;success++){
+						cumulative_p+=binom(NPT_P,trials,success);
+					}
+					cumulative_p = 1 - cumulative_p;
+					if (cumulative_p>=confi){
+						hunts_needed=trials;
+						break;
+					}
+				}
+				if (hunts_needed<0){this.amp=0;}
+
+				// Perform hunts_needed number of hunts
+				for (let i=0;i<hunts_needed;i++){
+					if (this.amp<=1){break;}
+					this.expected_hunt();
+				}
+				if (this.amp<=1){return;}
+
+				// Set array as "just" completing the stage
+				this.technic_array[NPT]=this.max_pieces[NPT];
+				for (let i=NPT+1;i<=5;i++){
+					this.technic_array[i]=0;
+				}
+				let stage_name;
+				switch (NPT){
+					case 0:
+						stage_name='Technic Pawns';
+						break;
+					case 1:
+						stage_name='Technic Knights';
+						break;
+					case 2:
+						stage_name='Technic Bishops';
+						break;
+					case 3:
+						stage_name='Technic Rooks';
+						break;
+					case 4:
+						stage_name='Technic Queen';
+						break;
+					case 5:
+						stage_name='Technic King';
+						break;
+				}
+				this.print(stage_name);
+			}
+
+		}
+		print(x){
+			result_string='';
+			result_string+='You cleared <strong>';
+			result_string+=x;
+			result_string+='</strong> after <strong>'+this.hunts+'</strong> hunts.'
+			result_string+='<br>'
+			result_string+='Remaining Amplifier: <strong>'+this.amp.toFixed(0)+'</strong><br>'
+			simresults_span.innerHTML=result_string+simresults_span.innerHTML;
+		}
+	}
+	runsim_button.addEventListener("click",(e)=>{
+		simresults_span.innerHTML='';
+		let power = document.getElementById('power').value;
+		let luck = document.getElementById('luck').value;
+		let amp = document.getElementById('amp_slider').value;
+		let confi = document.getElementById('confi').value;
+		localStorage.setItem("ztsim_cache",power+','+luck+','+amp+','+confi);
+		let run = new TowerRun(power,luck,amp,technic_count,mystic_count,cheese,trap);
+		for (let i=0;i<999;i++){
+			if (run.amp<=1){break;}
+			if (run.technic_array[5]>=1 || run.mystic_array[5]>=1){ break; }
+			run.confidence_hunt(confi);
+		}
+		if (run.amp<=1){run.print('NO MORE AMP');}
+	});
+</script>
+</body>
+</html>
