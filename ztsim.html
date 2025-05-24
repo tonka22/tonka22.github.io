@@ -228,7 +228,7 @@ Confidence: <input title="How &quot;safe&quot; you want the results to be" id="c
 		return mult_arr(expected_catches,amps).reduce((a,b)=>a+b);
 	}
 	pieces_div.addEventListener("click",(e)=>{
-		let clicked_index = pieces_div_children.indexOf(e.originalTarget);
+		let clicked_index = pieces_div_children.indexOf(e.target);
 		if (clicked_index<=15){
 			if (clicked_index==technic_count-1){
 				for (let i=0;i<=15;i++){pieces_div_children[i].style="";}
@@ -260,13 +260,13 @@ Confidence: <input title="How &quot;safe&quot; you want the results to be" id="c
 		}
 	});
 	cheese_div.addEventListener("click",(e)=>{
-		let clicked_index = cheese_div_children.indexOf(e.originalTarget);
+		let clicked_index = cheese_div_children.indexOf(e.target);
 		cheese_div_children[cheese].style=""
 		cheese_div_children[clicked_index].style="background-color:green"
 		cheese=clicked_index;
 	});
 	trap_div.addEventListener("click",(e)=>{
-		let clicked_index = trap_div_children.indexOf(e.originalTarget);
+		let clicked_index = trap_div_children.indexOf(e.target);
 		trap_div_children[trap].style="";
 		trap_div_children[clicked_index].style="background-color:green"
 		trap=clicked_index;
