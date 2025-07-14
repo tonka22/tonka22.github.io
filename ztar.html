@@ -127,7 +127,7 @@ Sample Size: <span id="ss"></span>
 	update_table();
 
 	pieces.addEventListener("click",(e)=>{
-		let clicked_index = pc.indexOf(e.originalTarget);
+		let clicked_index = pc.indexOf(e.target);
 		if (clicked_index<=15){
 			if (clicked_index==technic-1){
 				for (let i=0;i<=15;i++){pc[i].style="";}
@@ -164,14 +164,14 @@ Sample Size: <span id="ss"></span>
 	});
 
 	bait_div.addEventListener("click",(e)=>{
-		let ci = bc.indexOf(e.originalTarget);
+		let ci = bc.indexOf(e.target);
 		bc[bait].style=""
 		bc[ci].style="background-color:green"
 		bait=ci;
 		update_table();
 	});
 	trap_div.addEventListener("click",(e)=>{
-		let ci = tc.indexOf(e.originalTarget);
+		let ci = tc.indexOf(e.target);
 		tc[trap].style="";
 		tc[ci].style="background-color:green"
 		trap=ci;
